@@ -1,0 +1,312 @@
+body {
+  font-family: Arial, sans-serif;
+  background-image: url("https://images.igdb.com/igdb/image/upload/t_720p/scerbq.jpg");
+  background-color: #f4f4f9;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  margin: 0;
+  padding: 0;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(20, 30, 60, 0.9);
+  color: white;
+  padding: 30px;
+  width: 400px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  border-radius: 15px;
+  text-align: center;
+}
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.option-group {
+  margin: 20px 0;
+  text-align: left;
+}
+
+.option-group p {
+  font-size: 18px;
+  font-weight: bold;
+  color: #ddd;
+  margin-bottom: 10px;
+  display: inline-block;
+  padding-bottom: 5px;
+}
+
+.option-button {
+  display: inline-block;
+  margin: 5px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  background: #1e3a8a;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.option-button.active {
+  background: #2d6a4f;
+  color: #ffffff;
+  font-weight: bold;
+  box-shadow: 0 0 8px rgba(45, 106, 79, 0.7);
+}
+
+.option-button:hover {
+  background: #3b5998;
+}
+
+.close-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background: #7e0000;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.close-button:hover {
+  background: #a14444;
+}
+
+.main-page {
+  height: 100vh;
+  width: 100vw;
+  align-content: center;
+}
+
+.title {
+  height: 7%;
+  max-width: 70%;
+  font-size: 3vh;
+  max-lines: 2;
+  padding: 20px;
+  color: #f0fff2;
+  align-content: center;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.button-container {
+  height: 5%;
+  box-sizing: border-box;
+  text-align: center;
+  display: flex;
+  padding: 20px;
+  justify-content: center;
+  flex-direction: row;
+  align-items: center;
+}
+
+.basic-button {
+  background-color: #40ab47a6;
+  color: #e5e5e5;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 2vh;
+  padding: 10px 15px;
+  height: 2em;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.basic-button:hover {
+  background-color: #45a049;
+}
+
+.copy-button {
+  background-color: #40ab47a6;
+  color: #e5e5e5;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 2vh;
+  width: 15%;
+  height: 2em;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.copy-button:hover {
+  background-color: #45a049;
+}
+
+.duel-container {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  padding-left: 10%;
+  padding-right: 10%;
+  height: 75%;
+  box-sizing: border-box;
+}
+
+.music-card {
+  padding: 20px;
+  width: 48%;
+  background: rgba(0, 26, 63, 0.6); /* Updated background with opacity */
+  text-align: center;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+  backdrop-filter: blur(3px); /* Add blur effect for glassmorphism */
+}
+
+.music-card .anime {
+  align-content: center;
+  font-size: 2.2vh;
+  color: #a0ffac;
+  height: 10%;
+}
+
+.music-card .song {
+  align-content: center;
+  font-size: 2vh;
+  color: #fcffef;
+  height: 10%;
+}
+
+.music-card button {
+  padding: 10px;
+  background-color: #40ab47a6;
+  color: #e5e5e5;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 2.5vh;
+  height: 10%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.music-card button:hover {
+  background-color: #45a049;
+}
+
+.music-card video,
+.music-card iframe,
+.music-card audio {
+  width: 100%;
+  height: 70%;
+  border-radius: 8px;
+}
+
+.music-card audio {
+  width: 70%;
+  height: 70%;
+  border-radius: 8px;
+}
+
+.progress {
+  padding: 10px;
+  height: 10%;
+  width: 60%;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 auto;
+  background: rgba(0, 26, 63, 0.5);
+  border-radius: 10px;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(3px);
+}
+
+.progressbattle {
+  height: 50%;
+  border-radius: 8px;
+  font-size: 3vh;
+  box-sizing: border-box;
+  color: #f0fff2;
+}
+
+.progress-container {
+  width: 100%;
+  height: 50%;
+  background-color: #a9a9a9;
+  border-radius: 10px;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.progress-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #7f9bff, #2975ff);
+  border-radius: 10px;
+  transition: width 0.3s ease-in-out;
+}
+
+.table-container {
+  width: 100%;
+  max-height: 100%;
+  /* Hauteur maximale du conteneur du tableau */
+  overflow-y: auto;
+  /* Scroll vertical si nécessaire */
+  background-color: rgba(0, 0, 50, 0.7);
+  /* Fond bleu foncé transparent */
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #fff;
+  text-align: left;
+}
+
+th,
+td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background-color: #003366;
+}
+
+tr:nth-child(even) {
+  background-color: rgba(0, 0, 50, 0.5);
+  /* Lignes alternées légèrement transparentes */
+}
+
+tr:hover {
+  background-color: rgba(0, 0, 50, 0.8);
+  /* Fond bleu foncé au survol */
+}
+
+td {
+  white-space: nowrap;
+  /* Empêche le texte de se casser en ligne */
+  overflow: hidden;
+  /* Cache le texte qui dépasse */
+  text-overflow: ellipsis;
+  /* Ajoute "..." lorsque le texte est trop long */
+  max-width: 200px;
+  /* Limite la largeur pour forcer le texte à se tronquer */
+}
+
+table th,
+table td {
+  text-overflow: ellipsis;
+}

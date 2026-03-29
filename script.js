@@ -52,8 +52,6 @@ document.addEventListener("DOMContentLoaded", function() {
             console.log("Auth not available");
         }
     }
-    
-    configureLoadButton();
 });
 
 function configureLoadButton() {
@@ -741,4 +739,16 @@ function loadProgress() {
 
         showDuel(sortedIndexList[leftIndex][leftInnerIndex], sortedIndexList[rightIndex][rightInnerIndex]);
     }
+ document.addEventListener("DOMContentLoaded", function() {
+    document.title = config.title;
+    document.querySelector('meta[name="og:site_name"]')?.setAttribute("content", config.title);
+    document.querySelector('meta[name="og:description"]')?.setAttribute("content", config.description);
+    
+    // Configurar auth modal si existe
+    if (typeof setupAuthModal !== 'undefined') {
+        setupAuthModal();
+    }
+    
+    configureLoadButton();
+ });   
 }

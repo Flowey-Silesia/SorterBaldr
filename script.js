@@ -1,5 +1,4 @@
-// Agregar al inicio del archivo
-let supabaseClient = null;
+// script.js - Versión corregida
 let musicData = [];
 let sortedIndexList = [];
 let recordDataList = [];
@@ -27,7 +26,7 @@ let pointerPrev = 0;
 
 let totalBattles = 0;
 
-let mediaFormat = "video"; // "video", "audio", o "youtube"
+let mediaFormat = "video";
 let region = "eu";
 
 fetch('songList.json')
@@ -39,19 +38,21 @@ fetch('songList.json')
         console.error("Error loading JSON:", error);
     });
 
-
-// Esperar a que todo el DOM esté listo
+// ESPERAR A QUE TODO CARGUE
 document.addEventListener("DOMContentLoaded", function() {
     document.title = config.title;
     document.querySelector('meta[name="og:site_name"]').setAttribute("content", config.title);
     document.querySelector('meta[name="og:description"]').setAttribute("content", config.description);
     
-    // Configurar autenticación si está disponible
+    // Configurar auth solo si existe
     if (typeof setupAuthModal !== 'undefined') {
-        setupAuthModal();
+        try {
+            setupAuthModal();
+        } catch(e) {
+            console.log("Auth not available");
+        }
     }
     
-    // Configurar botón de carga
     configureLoadButton();
 });
 
@@ -61,33 +62,27 @@ function configureLoadButton() {
     let battleNoLocal = JSON.parse(localStorage.getItem(`${config.localStoragePrefix}-battleNo`));
     let leftIndexLocal = JSON.parse(localStorage.getItem(`${config.localStoragePrefix}-leftIndex`));
     
-    // Verificar si hay autenticación disponible y usuario logueado
-    const hasAuth = typeof getCurrentUser !== 'undefined';
-    const isLoggedIn = hasAuth && getCurrentUser();
-    
-    if (isLoggedIn) {
-        // Usuario autenticado - mostrar botón de cloud load
-        if (!document.getElementById('cloudLoadBtn')) {
-            let cloudBtn = document.createElement('button');
-            cloudBtn.id = 'cloudLoadBtn';
-            cloudBtn.className = 'basic-button';
-            cloudBtn.textContent = '☁️ Load from Cloud';
-            cloudBtn.onclick = loadByUsername;
-            document.querySelector('.button-container').appendChild(cloudBtn);
-        }
-    } else if (hasAuth) {
-        // Autenticación disponible pero no logueado
-        if (!document.getElementById('loginBtnMain')) {
-            let loginBtn = document.createElement('button');
-            loginBtn.id = 'loginBtnMain';
-            loginBtn.className = 'basic-button';
-            loginBtn.textContent = '☁️ Cloud Login';
-            loginBtn.onclick = showAuthModal;
-            document.querySelector('.button-container').appendChild(loginBtn);
+    // Verificar si hay usuario autenticado (solo si la función existe)
+    let isLoggedIn = false;
+    if (typeof getCurrentUser !== 'undefined') {
+        try {
+            isLoggedIn = !!getCurrentUser();
+        } catch(e) {
+            isLoggedIn = false;
         }
     }
     
-    // Siempre mostrar el botón de load si hay datos locales
+    // Botón de cloud solo si hay auth
+    if (typeof getCurrentUser !== 'undefined' && !document.getElementById('cloudLoadBtn')) {
+        let cloudBtn = document.createElement('button');
+        cloudBtn.id = 'cloudLoadBtn';
+        cloudBtn.className = 'basic-button';
+        cloudBtn.textContent = isLoggedIn ? '☁️ Save to Cloud' : '☁️ Cloud Login';
+        cloudBtn.onclick = isLoggedIn ? saveToCloud : showAuthModal;
+        document.querySelector('.button-container').appendChild(cloudBtn);
+    }
+    
+    // Configurar botón load normal
     if (battleNoLocal == null) {
         loadButton.hidden = true;
         title.textContent = 'Press "Start" to begin sorting.';
@@ -103,10 +98,45 @@ function configureLoadButton() {
     }
 }
 
-// Función para cargar desde la nube
-async function loadByUsername() {
+// Función para guardar en cloud
+async function saveToCloud() {
     if (typeof getCurrentUser === 'undefined' || !getCurrentUser()) {
-        alert('Please login first');
+        if (typeof showAuthModal !== 'undefined') {
+            showAuthModal();
+        }
+        return;
+    }
+    
+    if (typeof saveRankingData === 'undefined') {
+        alert("Cloud save not configured");
+        return;
+    }
+    
+    const rankingData = {
+        sortedIndexList,
+        recordDataList,
+        parentIndexList,
+        leftIndex,
+        leftInnerIndex,
+        rightIndex,
+        rightInnerIndex,
+        battleNo,
+        sortedNo,
+        pointer,
+        totalBattles
+    };
+    
+    const result = await saveRankingData(rankingData);
+    if (result.success) {
+        alert("Data saved to cloud!");
+    } else {
+        alert("Error saving: " + result.error);
+    }
+}
+
+// Función para cargar desde cloud
+async function loadFromCloud() {
+    if (typeof getCurrentUser === 'undefined' || !getCurrentUser()) {
         if (typeof showAuthModal !== 'undefined') {
             showAuthModal();
         }
@@ -114,7 +144,7 @@ async function loadByUsername() {
     }
     
     if (typeof loadRankingData === 'undefined') {
-        alert('Cloud save feature not available');
+        alert("Cloud load not configured");
         return;
     }
     
@@ -155,11 +185,65 @@ async function loadByUsername() {
             showDuel(sortedIndexList[leftIndex][leftInnerIndex], sortedIndexList[rightIndex][rightInnerIndex]);
         }
         
-        alert('Data loaded from cloud successfully!');
+        alert('Data loaded from cloud!');
     } else {
-        alert('Error loading from cloud: ' + result.error);
+        alert('Error: ' + result.error);
     }
 }
+
+// Modificar autoSave para que no falle
+function autoSave() {
+    // Guardar en localStorage siempre
+    localStorage.setItem(`${config.localStoragePrefix}-sortedIndexList`, JSON.stringify(sortedIndexList));
+    localStorage.setItem(`${config.localStoragePrefix}-recordDataList`, JSON.stringify(recordDataList));
+    localStorage.setItem(`${config.localStoragePrefix}-parentIndexList`, JSON.stringify(parentIndexList));
+    localStorage.setItem(`${config.localStoragePrefix}-leftIndex`, JSON.stringify(leftIndex));
+    localStorage.setItem(`${config.localStoragePrefix}-leftInnerIndex`, JSON.stringify(leftInnerIndex));
+    localStorage.setItem(`${config.localStoragePrefix}-rightIndex`, JSON.stringify(rightIndex));
+    localStorage.setItem(`${config.localStoragePrefix}-rightInnerIndex`, JSON.stringify(rightInnerIndex));
+    localStorage.setItem(`${config.localStoragePrefix}-battleNo`, JSON.stringify(battleNo));
+    localStorage.setItem(`${config.localStoragePrefix}-sortedNo`, JSON.stringify(sortedNo));
+    localStorage.setItem(`${config.localStoragePrefix}-pointer`, JSON.stringify(pointer));
+    localStorage.setItem(`${config.localStoragePrefix}-totalBattles`, JSON.stringify(totalBattles));
+    
+    // Guardar en cloud solo si las funciones existen
+    if (typeof getCurrentUser !== 'undefined' && getCurrentUser() && typeof saveRankingData !== 'undefined') {
+        const rankingData = {
+            sortedIndexList,
+            recordDataList,
+            parentIndexList,
+            leftIndex,
+            leftInnerIndex,
+            rightIndex,
+            rightInnerIndex,
+            battleNo,
+            sortedNo,
+            pointer,
+            totalBattles
+        };
+        saveRankingData(rankingData).catch(err => console.log("Cloud save:", err));
+    }
+}
+
+// Asegúrate de que showAuthModal y closeAuthModal existan
+function showAuthModal() {
+    const modal = document.getElementById('authModal');
+    const overlay = document.getElementById('modalOverlay');
+    if (modal) modal.style.display = 'block';
+    if (overlay) overlay.style.display = 'block';
+}
+
+function closeAuthModal() {
+    const modal = document.getElementById('authModal');
+    const overlay = document.getElementById('modalOverlay');
+    if (modal) modal.style.display = 'none';
+    if (overlay) overlay.style.display = 'none';
+    const msg = document.getElementById('authMessage');
+    if (msg) msg.textContent = '';
+}
+
+// El resto de tus funciones (showDuel, pick, start, undo, result, etc.) van aquí
+// ... mantén todas tus funciones originales ...
 
 function showDuel(id1, id2) {
     const duelContainer = document.getElementById('duel');
@@ -602,43 +686,6 @@ function copyResults() {
         console.error("Error copying results :", err);
     });
 }
-
-// Modificar autoSave para guardar en nube si está disponible
-function autoSave() {
-    // Guardar en localStorage siempre
-    localStorage.setItem(`${config.localStoragePrefix}-sortedIndexList`, JSON.stringify(sortedIndexList));
-    localStorage.setItem(`${config.localStoragePrefix}-recordDataList`, JSON.stringify(recordDataList));
-    localStorage.setItem(`${config.localStoragePrefix}-parentIndexList`, JSON.stringify(parentIndexList));
-    localStorage.setItem(`${config.localStoragePrefix}-leftIndex`, JSON.stringify(leftIndex));
-    localStorage.setItem(`${config.localStoragePrefix}-leftInnerIndex`, JSON.stringify(leftInnerIndex));
-    localStorage.setItem(`${config.localStoragePrefix}-rightIndex`, JSON.stringify(rightIndex));
-    localStorage.setItem(`${config.localStoragePrefix}-rightInnerIndex`, JSON.stringify(rightInnerIndex));
-    localStorage.setItem(`${config.localStoragePrefix}-battleNo`, JSON.stringify(battleNo));
-    localStorage.setItem(`${config.localStoragePrefix}-sortedNo`, JSON.stringify(sortedNo));
-    localStorage.setItem(`${config.localStoragePrefix}-pointer`, JSON.stringify(pointer));
-    localStorage.setItem(`${config.localStoragePrefix}-totalBattles`, JSON.stringify(totalBattles));
-    
-    // Guardar en la nube si está disponible y hay usuario
-    if (typeof getCurrentUser !== 'undefined' && getCurrentUser() && typeof saveRankingData !== 'undefined') {
-        const rankingData = {
-            sortedIndexList,
-            recordDataList,
-            parentIndexList,
-            leftIndex,
-            leftInnerIndex,
-            rightIndex,
-            rightInnerIndex,
-            battleNo,
-            sortedNo,
-            pointer,
-            totalBattles
-        };
-        saveRankingData(rankingData).catch(err => {
-            console.log("Cloud save error:", err);
-        });
-    }
-}
-
 
 function loadProgress() {
     battleNo = JSON.parse(localStorage.getItem(`${config.localStoragePrefix}-battleNo`));

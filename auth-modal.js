@@ -45,6 +45,7 @@ function toggleAuthMode() {
     updateAuthMode();
 }
 
+// Al hacer login exitoso, guardar y mostrar
 async function handleLogin() {
     const username = document.getElementById('username')?.value.trim();
     const password = document.getElementById('password')?.value;
@@ -64,6 +65,7 @@ async function handleLogin() {
         }
         setTimeout(() => {
             closeAuthModal();
+            updateUserDisplay(); // Mostrar usuario en la UI
             location.reload();
         }, 1000);
     } else {
@@ -105,6 +107,7 @@ async function handleRegister() {
         setTimeout(() => {
             isLoginMode = true;
             updateAuthMode();
+            updateUserDisplay(); // Mostrar usuario
             const usernameInput = document.getElementById('username');
             const passwordInput = document.getElementById('password');
             const confirmInput = document.getElementById('confirmPassword');
@@ -134,4 +137,46 @@ function setupAuthModal() {
     
     if (registerBtn) registerBtn.style.display = 'none';
     updateAuthMode();
+}
+
+function updateUserDisplay() {
+    const user = getCurrentUser();
+    const container = document.querySelector('.button-container');
+    
+    // Eliminar botón de login si existe
+    const oldLoginBtn = document.getElementById('cloudLoginBtn');
+    if (oldLoginBtn) oldLoginBtn.remove();
+    
+    if (user) {
+        // Crear indicador de usuario logueado
+        let userDisplay = document.getElementById('userDisplay');
+        if (!userDisplay) {
+            userDisplay = document.createElement('div');
+            userDisplay.id = 'userDisplay';
+            userDisplay.className = 'user-display';
+            container.insertBefore(userDisplay, container.firstChild);
+        }
+        userDisplay.innerHTML = `✅ ${user.username} | <span onclick="logout()" style="cursor:pointer; color:#ff9999;">🚪 Logout</span>`;
+        
+        // Cambiar color del botón cloud load
+        const cloudLoadBtn = document.getElementById('cloudLoadBtn');
+        if (cloudLoadBtn) {
+            cloudLoadBtn.style.backgroundColor = '#2d6a4f';
+            cloudLoadBtn.textContent = '☁️ Load Cloud';
+        }
+    } else {
+        const userDisplay = document.getElementById('userDisplay');
+        if (userDisplay) userDisplay.remove();
+        
+        // Volver a agregar botón de login
+        if (!document.getElementById('cloudLoginBtn')) {
+            const loginBtn = document.createElement('button');
+            loginBtn.id = 'cloudLoginBtn';
+            loginBtn.className = 'basic-button';
+            loginBtn.textContent = '☁️ Login';
+            loginBtn.style.backgroundColor = '#1e3a8a';
+            loginBtn.onclick = showAuthModal;
+            container.appendChild(loginBtn);
+        }
+    }
 }

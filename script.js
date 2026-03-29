@@ -132,9 +132,11 @@ async function saveToCloud() {
     }
 }
 
-// Función para cargar desde cloud
+// Función para cargar datos desde la nube de Supabase
 async function loadFromCloud() {
+    // Verificar si hay usuario logueado
     if (typeof getCurrentUser === 'undefined' || !getCurrentUser()) {
+        alert("Please login first. Click the Login button.");
         if (typeof showAuthModal !== 'undefined') {
             showAuthModal();
         }
@@ -142,13 +144,16 @@ async function loadFromCloud() {
     }
     
     if (typeof loadRankingData === 'undefined') {
-        alert("Cloud load not configured");
+        alert("Cloud feature not available");
         return;
     }
+    
+    alert("Loading data from cloud for user: " + getCurrentUser().username);
     
     const result = await loadRankingData();
     
     if (result.success) {
+        // Cargar los datos en las variables globales
         sortedIndexList = result.data.sortedIndexList;
         recordDataList = result.data.recordDataList;
         parentIndexList = result.data.parentIndexList;
@@ -161,6 +166,12 @@ async function loadFromCloud() {
         pointer = result.data.pointer;
         totalBattles = result.data.totalBattles;
         
+        // Guardar también en localStorage para respaldo
+        autoSave();
+        
+        alert(`Data loaded! Battle ${battleNo} of ${totalBattles}`);
+        
+        // Mostrar la batalla actual
         if (leftIndex == -1) {
             document.querySelector('.progress-container').removeAttribute("hidden");
             progressBar(`Completed! (${battleNo} battles)`, 100);
@@ -170,22 +181,21 @@ async function loadFromCloud() {
             document.getElementById("start").style.display = "none";
             document.getElementById("load").style.display = "none";
             
-            let button1 = document.createElement("button");
-            button1.classList.add("basic-button");
-            button1.textContent = "Undo";
-            button1.addEventListener("click", undo);
-            
-            let container = document.querySelector(".button-container");
-            container.appendChild(button1);
+            // Verificar si ya existe el botón Undo
+            if (!document.querySelector('.basic-button[onclick="undo()"]')) {
+                let button1 = document.createElement("button");
+                button1.classList.add("basic-button");
+                button1.textContent = "Undo";
+                button1.addEventListener("click", undo);
+                let container = document.querySelector(".button-container");
+                container.appendChild(button1);
+            }
             
             document.querySelector('.progress-container').removeAttribute("hidden");
-            
             showDuel(sortedIndexList[leftIndex][leftInnerIndex], sortedIndexList[rightIndex][rightInnerIndex]);
         }
-        
-        alert('Data loaded from cloud!');
     } else {
-        alert('Error: ' + result.error);
+        alert("Error loading from cloud: " + result.error + "\n\nMake sure you have saved data first. Play some battles and the data will auto-save to cloud.");
     }
 }
 

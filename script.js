@@ -1,3 +1,5 @@
+// Agregar al inicio del archivo
+let supabaseClient = null;
 let musicData = [];
 let sortedIndexList = [];
 let recordDataList = [];
@@ -25,7 +27,7 @@ let pointerPrev = 0;
 
 let totalBattles = 0;
 
-let video = true;
+let mediaFormat = "video"; // "video", "audio", o "youtube"
 let region = "eu";
 
 fetch('songList.json')
@@ -40,9 +42,39 @@ fetch('songList.json')
 
 configureLoadButton();
 
+// Función para mostrar modal de autenticación
+function showAuthModal() {
+  document.getElementById('authModal').style.display = 'block';
+  document.getElementById('modalOverlay').style.display = 'block';
+}
+
+function closeAuthModal() {
+  document.getElementById('authModal').style.display = 'none';
+  document.getElementById('modalOverlay').style.display = 'none';
+  document.getElementById('authMessage').textContent = '';
+}
+// Modificar configureLoadButton
 function configureLoadButton() {
     let loadButton = document.getElementById("load");
     let title = document.querySelector('.title');
+    
+    // Primero verificar si hay usuario autenticado
+    if (!getCurrentUser()) {
+        loadButton.hidden = true;
+        title.textContent = 'Please login to start sorting.';
+        
+        // Agregar botón de login si no existe
+        if (!document.getElementById('loginBtnMain')) {
+            let loginBtn = document.createElement('button');
+            loginBtn.id = 'loginBtnMain';
+            loginBtn.className = 'basic-button';
+            loginBtn.textContent = 'Login / Register';
+            loginBtn.onclick = showAuthModal;
+            document.querySelector('.button-container').appendChild(loginBtn);
+        }
+        return;
+    }
+    
     let battleNoLocal = JSON.parse(localStorage.getItem(`${config.localStoragePrefix}-battleNo`));
     let leftIndexLocal = JSON.parse(localStorage.getItem(`${config.localStoragePrefix}-leftIndex`));
     if (battleNoLocal == null) {
@@ -60,70 +92,188 @@ function configureLoadButton() {
     }
 }
 
+// Nueva función para cargar por username
+async function loadByUsername() {
+    if (!getCurrentUser()) {
+        alert('Please login first');
+        showAuthModal();
+        return;
+    }
+    
+    const result = await loadRankingData();
+    
+    if (result.success) {
+        // Cargar los datos en las variables globales
+        sortedIndexList = result.data.sortedIndexList;
+        recordDataList = result.data.recordDataList;
+        parentIndexList = result.data.parentIndexList;
+        leftIndex = result.data.leftIndex;
+        leftInnerIndex = result.data.leftInnerIndex;
+        rightIndex = result.data.rightIndex;
+        rightInnerIndex = result.data.rightInnerIndex;
+        battleNo = result.data.battleNo;
+        sortedNo = result.data.sortedNo;
+        pointer = result.data.pointer;
+        totalBattles = result.data.totalBattles;
+        
+        // Continuar con la carga
+        if (leftIndex == -1) {
+            document.querySelector('.progress-container').removeAttribute("hidden");
+            progressBar(`Completed! (${battleNo} battles)`, 100);
+            result();
+        } else {
+            document.querySelector('.title').style.display = "none";
+            document.getElementById("start").style.display = "none";
+            document.getElementById("load").style.display = "none";
+            
+            let button1 = document.createElement("button");
+            button1.classList.add("basic-button");
+            button1.textContent = "Undo";
+            button1.addEventListener("click", undo);
+            
+            let container = document.querySelector(".button-container");
+            container.appendChild(button1);
+            
+            document.querySelector('.progress-container').removeAttribute("hidden");
+            
+            showDuel(sortedIndexList[leftIndex][leftInnerIndex], sortedIndexList[rightIndex][rightInnerIndex]);
+        }
+        
+        alert('Data loaded successfully!');
+    } else {
+        alert('Error loading data: ' + result.error);
+    }
+}
+
 function showDuel(id1, id2) {
     const duelContainer = document.getElementById('duel');
     duelContainer.innerHTML = "";
 
-	function createMusicCard(music, isLeft) {
-    const card = document.createElement('div');
-    card.className = 'music-card';
+    function createMusicCard(music, isLeft) {
+        const card = document.createElement('div');
+        card.className = 'music-card';
 
-    let mediaElement = null;
+        let mediaElement = null;
 
-    // Verificar si hay video disponible y el modo video está activado
-    if (video && music.video) {
+        // Sistema de fallback según el formato seleccionado
+        if (mediaFormat === "video") {
+            // Intentar: Video local -> YouTube -> Audio
+            if (music.video) {
+                mediaElement = createVideoElement(music);
+            }
+            
+            if (!mediaElement && music.youtube) {
+                mediaElement = createYouTubeElement(music);
+            }
+            
+            if (!mediaElement && music.mp3) {
+                mediaElement = createAudioElement(music);
+            }
+        } 
+        else if (mediaFormat === "youtube") {
+            // Intentar: YouTube -> Video local -> Audio
+            if (music.youtube) {
+                mediaElement = createYouTubeElement(music);
+            }
+            
+            if (!mediaElement && music.video) {
+                mediaElement = createVideoElement(music);
+            }
+            
+            if (!mediaElement && music.mp3) {
+                mediaElement = createAudioElement(music);
+            }
+        } 
+        else if (mediaFormat === "audio") {
+            // Intentar: Audio -> YouTube -> Video local
+            if (music.mp3) {
+                mediaElement = createAudioElement(music);
+            }
+            
+            if (!mediaElement && music.youtube) {
+                mediaElement = createYouTubeElement(music);
+            }
+            
+            if (!mediaElement && music.video) {
+                mediaElement = createVideoElement(music);
+            }
+        }
+
+        // Si aún no hay ningún medio disponible
+        if (!mediaElement) {
+            mediaElement = `<div class="no-media">No hay contenido multimedia disponible para esta canción</div>`;
+        }
+
+        card.innerHTML = `
+            ${mediaElement}
+            <div class="anime">${music.anime || "Anime desconocido"}</div>
+            <div class="song">${music.name || "Canción sin nombre"}</div>
+        `;
+
+        const button = document.createElement('button');
+        button.textContent = "PICK";
+        button.addEventListener('click', () => {
+            if (isLeft) {
+                 pick('left');
+            } else {
+                 pick('right');
+            }
+         });
+
+         card.appendChild(button);
+         return card;
+    }
+
+    // Función auxiliar para crear elemento de video local
+    function createVideoElement(music) {
         try {
             if (music.video.includes("youtube.com")) {
                 const videoId = new URL(music.video).searchParams.get("v");
-                mediaElement = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`;
+                return `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`;
             } else if (music.video.endsWith(".webm") || music.video.endsWith(".mp4")) {
                 if (music.video.includes("animemusicquiz")) {
-                    mediaElement = `<video controls><source src="https://${region}dist.animemusicquiz.com/${music.video.split('/').pop()}" type="video/webm"></video>`;
+                    return `<video controls><source src="https://${region}dist.animemusicquiz.com/${music.video.split('/').pop()}" type="video/webm"></video>`;
                 } else {
-                    mediaElement = `<video controls><source src="${music.video}" type="video/webm"></video>`;
+                    return `<video controls><source src="${music.video}" type="video/webm"></video>`;
                 }
             }
         } catch (e) {
             console.warn("Error al procesar video:", e);
         }
+        return null;
     }
 
-    // Si no hay video o falló la creación, usar MP3 si existe
-    if (!mediaElement && music.mp3) {
+    // Función auxiliar para crear elemento de YouTube
+    function createYouTubeElement(music) {
+        try {
+            let videoId = music.youtube;
+            // Si la URL es completa, extraer el ID
+            if (music.youtube.includes("youtube.com") || music.youtube.includes("youtu.be")) {
+                if (music.youtube.includes("youtube.com/watch?v=")) {
+                    videoId = new URL(music.youtube).searchParams.get("v");
+                } else if (music.youtube.includes("youtu.be/")) {
+                    videoId = music.youtube.split("/").pop();
+                }
+            }
+            return `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`;
+        } catch (e) {
+            console.warn("Error al procesar YouTube:", e);
+        }
+        return null;
+    }
+
+    // Función auxiliar para crear elemento de audio
+    function createAudioElement(music) {
         try {
             if (music.mp3.includes("animemusicquiz")) {
-                mediaElement = `<audio controls><source src="https://${region}dist.animemusicquiz.com/${music.mp3.split('/').pop()}" type="audio/mp3"></audio>`;
+                return `<audio controls><source src="https://${region}dist.animemusicquiz.com/${music.mp3.split('/').pop()}" type="audio/mp3"></audio>`;
             } else {
-                mediaElement = `<audio controls><source src="${music.mp3}" type="audio/mp3"></audio>`;
+                return `<audio controls><source src="${music.mp3}" type="audio/mp3"></audio>`;
             }
         } catch (e) {
             console.warn("Error al procesar audio:", e);
         }
-    }
-
-    // Si no hay ningún medio disponible
-    if (!mediaElement) {
-        mediaElement = '<div class="no-media">No hay contenido multimedia disponible</div>';
-    }
-
-    card.innerHTML = `
-        ${mediaElement}
-        <div class="anime">${music.anime || "Anime desconocido"}</div>
-        <div class="song">${music.name || "Canción sin nombre"}</div>
-    `;
-
-    const button = document.createElement('button');
-    button.textContent = "PICK";
-    button.addEventListener('click', () => {
-        if (isLeft) {
-             pick('left');
-        } else {
-             pick('right');
-        }
-     });
-
-     card.appendChild(button);
-     return card;
+        return null;
     }
 
     if (id1 < musicData.length && id2 < musicData.length) {
@@ -135,7 +285,6 @@ function showDuel(id1, id2) {
 
     const percent = Math.floor(sortedNo * 100 / totalBattles);
     progressBar(`Battle no. ${battleNo}`, percent);
-
 }
 
 function pick(sortType) {
@@ -380,20 +529,28 @@ function selectOption(type, element) {
     element.classList.add("active");
     let text = element.textContent;
 
-    if (text === 'Video') {
-        video = true;
-    } else if (text === 'Audio') {
-        video = false;
-    } else if (text === 'Europe') {
-        region = "eu"
-    } else if (text === 'NA West') {
-        region = "naw";
-    } else if (text === 'NA East') {
-        region = "nae"
+    if (type === 'format') {
+        if (text === 'Video') {
+            mediaFormat = "video";
+        } else if (text === 'Audio') {
+            mediaFormat = "audio";
+        } else if (text === 'YouTube') {
+            mediaFormat = "youtube";
+        }
+    } else if (type === 'region') {
+        if (text === 'Europe') {
+            region = "eu";
+        } else if (text === 'NA West') {
+            region = "naw";
+        } else if (text === 'NA East') {
+            region = "nae";
+        }
     }
 
-    showDuel(sortedIndexList[leftIndex][leftInnerIndex], sortedIndexList[rightIndex][rightInnerIndex]);
-
+    // Actualizar la vista si hay una batalla en curso
+    if (sortedIndexList && sortedIndexList.length > 0 && leftIndex !== undefined) {
+        showDuel(sortedIndexList[leftIndex][leftInnerIndex], sortedIndexList[rightIndex][rightInnerIndex]);
+    }
 }
 
 function copyToClipboard() {
@@ -431,11 +588,10 @@ function copyResults() {
 }
 
 function autoSave() {
-
+    // Guardar en localStorage
     localStorage.setItem(`${config.localStoragePrefix}-sortedIndexList`, JSON.stringify(sortedIndexList));
     localStorage.setItem(`${config.localStoragePrefix}-recordDataList`, JSON.stringify(recordDataList));
     localStorage.setItem(`${config.localStoragePrefix}-parentIndexList`, JSON.stringify(parentIndexList));
-
     localStorage.setItem(`${config.localStoragePrefix}-leftIndex`, JSON.stringify(leftIndex));
     localStorage.setItem(`${config.localStoragePrefix}-leftInnerIndex`, JSON.stringify(leftInnerIndex));
     localStorage.setItem(`${config.localStoragePrefix}-rightIndex`, JSON.stringify(rightIndex));
@@ -443,21 +599,36 @@ function autoSave() {
     localStorage.setItem(`${config.localStoragePrefix}-battleNo`, JSON.stringify(battleNo));
     localStorage.setItem(`${config.localStoragePrefix}-sortedNo`, JSON.stringify(sortedNo));
     localStorage.setItem(`${config.localStoragePrefix}-pointer`, JSON.stringify(pointer));
-
-    localStorage.setItem(`${config.localStoragePrefix}-sortedIndexListPrev`, JSON.stringify(sortedIndexListPrev));
-    localStorage.setItem(`${config.localStoragePrefix}-recordDataListPrev`, JSON.stringify(recordDataListPrev));
-    localStorage.setItem(`${config.localStoragePrefix}-parentIndexListPrev`, JSON.stringify(parentIndexListPrev));
-
-    localStorage.setItem(`${config.localStoragePrefix}-leftIndexPrev`, JSON.stringify(leftIndexPrev));
-    localStorage.setItem(`${config.localStoragePrefix}-leftInnerIndexPrev`, JSON.stringify(leftInnerIndexPrev));
-    localStorage.setItem(`${config.localStoragePrefix}-rightIndexPrev`, JSON.stringify(rightIndexPrev));
-    localStorage.setItem(`${config.localStoragePrefix}-rightInnerIndexPrev`, JSON.stringify(rightInnerIndexPrev));
-    localStorage.setItem(`${config.localStoragePrefix}-battleNoPrev`, JSON.stringify(battleNoPrev));
-    localStorage.setItem(`${config.localStoragePrefix}-sortedNoPrev`, JSON.stringify(sortedNoPrev));
-    localStorage.setItem(`${config.localStoragePrefix}-pointerPrev`, JSON.stringify(pointerPrev));
-
     localStorage.setItem(`${config.localStoragePrefix}-totalBattles`, JSON.stringify(totalBattles));
+    
+    // Guardar en la nube si hay usuario autenticado
+    if (getCurrentUser()) {
+        const rankingData = {
+            sortedIndexList,
+            recordDataList,
+            parentIndexList,
+            leftIndex,
+            leftInnerIndex,
+            rightIndex,
+            rightInnerIndex,
+            battleNo,
+            sortedNo,
+            pointer,
+            totalBattles
+        };
+        saveRankingData(rankingData);
+    }
 }
+
+// Agregar en DOMContentLoaded
+document.addEventListener("DOMContentLoaded", function() {
+    document.title = config.title;
+    document.querySelector('meta[name="og:site_name"]').setAttribute("content", config.title);
+    document.querySelector('meta[name="og:description"]').setAttribute("content", config.description);
+    
+    // Setup auth modal
+    setupAuthModal();
+});
 
 function loadProgress() {
     battleNo = JSON.parse(localStorage.getItem(`${config.localStoragePrefix}-battleNo`));

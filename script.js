@@ -53,7 +53,9 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 });
-
+ {
+ configureLoadButton();
+ }
 function configureLoadButton() {
     let loadButton = document.getElementById("load");
     let title = document.querySelector('.title');

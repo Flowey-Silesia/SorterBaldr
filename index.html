@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="shortcut icon" type="image/x-icon" href="favicon.ico?">
   <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       document.title = config.title;
@@ -28,6 +29,7 @@
       <p>Format:</p>
       <button class="option-button active" data-type="format" onclick="selectOption('format', this)">Video</button>
       <button class="option-button" data-type="format" onclick="selectOption('format', this)">Audio</button>
+      <button class="option-button" data-type="format" onclick="selectOption('format', this)">YouTube</button>
     </div>
     <div class="option-group">
       <p>Region:</p>
@@ -36,6 +38,25 @@
       <button class="option-button" data-type="region" onclick="selectOption('region', this)">NA East</button>
     </div>
     <button class="close-button" onclick="closeSettings()">Close</button>
+  </div>
+
+  <!-- Modal de autenticación -->
+  <div id="authModal" class="modal" style="display: none;">
+    <h2 id="authTitle">Login</h2>
+    <div class="option-group">
+      <input type="text" id="username" placeholder="Username" class="auth-input">
+      <input type="password" id="password" placeholder="Password" class="auth-input">
+      <div id="confirmPasswordGroup" style="display: none;">
+        <input type="password" id="confirmPassword" placeholder="Confirm Password" class="auth-input">
+      </div>
+    </div>
+    <div class="option-group">
+      <button id="loginBtn" class="option-button">Login</button>
+      <button id="registerBtn" class="option-button">Register</button>
+      <button id="switchAuthBtn" class="option-button">Create Account</button>
+      <button id="closeAuthBtn" class="close-button">Close</button>
+    </div>
+    <div id="authMessage" style="color: #ff9999; margin-top: 10px;"></div>
   </div>
 
   <div id="main" class="main-page">
@@ -59,6 +80,9 @@
 
   </div>
 
+  <!-- Scripts en orden correcto -->
+  <script src="auth.js"></script>
+  <script src="auth-modal.js"></script>
   <script src="script.js"></script>
 
 </body>

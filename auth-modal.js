@@ -63,11 +63,22 @@ async function handleLogin() {
             messageDiv.textContent = 'Login successful!';
             messageDiv.style.color = '#99ff99';
         }
+        
+        // Cerrar modal
+        closeAuthModal();
+        
+        // NO hacer location.reload()
+        // En su lugar, actualizar la UI manualmente
         setTimeout(() => {
-            closeAuthModal();
-            updateUserDisplay(); // Mostrar usuario en la UI
-            location.reload();
-        }, 1000);
+            // Actualizar la interfaz para mostrar el usuario logueado
+            if (typeof configureLoadButton === 'function') {
+                configureLoadButton();
+            }
+            // Limpiar campos
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            if (messageDiv) messageDiv.textContent = '';
+        }, 500);
     } else {
         if (messageDiv) {
             messageDiv.textContent = result.error;
@@ -104,17 +115,21 @@ async function handleRegister() {
             messageDiv.textContent = 'Registration successful! You can now login.';
             messageDiv.style.color = '#99ff99';
         }
+        
+        // Cambiar a modo login automáticamente
         setTimeout(() => {
             isLoginMode = true;
             updateAuthMode();
-            updateUserDisplay(); // Mostrar usuario
-            const usernameInput = document.getElementById('username');
-            const passwordInput = document.getElementById('password');
-            const confirmInput = document.getElementById('confirmPassword');
-            if (usernameInput) usernameInput.value = '';
-            if (passwordInput) passwordInput.value = '';
-            if (confirmInput) confirmInput.value = '';
+            document.getElementById('username').value = username;
+            document.getElementById('password').value = '';
+            document.getElementById('confirmPassword').value = '';
             if (messageDiv) messageDiv.textContent = '';
+            
+            // Opcional: hacer login automático después de registrar
+            // loginUser(username, password).then(() => {
+            //     closeAuthModal();
+            //     configureLoadButton();
+            // });
         }, 2000);
     } else {
         if (messageDiv) {

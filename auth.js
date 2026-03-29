@@ -1,6 +1,6 @@
 // auth.js
 const SUPABASE_URL = 'https://xsciqtvfknxjpsdgytsv.supabase.co'; // Reemplaza con tu URL
-const SUPABASE_ANON_KEY = 'YourWBest573'; // Reemplaza con tu clave anónima
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzY2lxdHZma254anBzZGd5dHN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NTQyNjgsImV4cCI6MjA5MDMzMDI2OH0.9GG43QuwzXYO_D6hDX1Ga0zZISgCJzJS3Wf_09lcmXk'; // Reemplaza con tu clave anónima
 
 let currentUser = null;
 

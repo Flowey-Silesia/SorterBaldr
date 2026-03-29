@@ -416,13 +416,54 @@ function pick(sortType) {
         pointer = 0;
     }
 
-    if (leftIndex < 0) {
+     if (leftIndex < 0) {
         progressBar(`Completed! (${battleNo} battles)`, 100);
         autoSave();
+        
+        // 🔹 GUARDAR EN NUBE AL TERMINAR 🔹
+        if (typeof getCurrentUser !== 'undefined' && getCurrentUser() && typeof saveRankingData !== 'undefined') {
+            const rankingData = {
+                sortedIndexList,
+                recordDataList,
+                parentIndexList,
+                leftIndex,
+                leftInnerIndex,
+                rightIndex,
+                rightInnerIndex,
+                battleNo,
+                sortedNo,
+                pointer,
+                totalBattles
+            };
+            saveRankingData(rankingData).then(result => {
+                if (result.success) console.log("Final data saved to cloud");
+                else console.log("Cloud save failed:", result.error);
+            });
+        }
+        
         result();
     } else {
         battleNo++;
         autoSave();
+        
+        // 🔹 GUARDAR EN NUBE DESPUÉS DE CADA BATALLA 🔹
+        if (typeof getCurrentUser !== 'undefined' && getCurrentUser() && typeof saveRankingData !== 'undefined') {
+            const rankingData = {
+                sortedIndexList,
+                recordDataList,
+                parentIndexList,
+                leftIndex,
+                leftInnerIndex,
+                rightIndex,
+                rightInnerIndex,
+                battleNo,
+                sortedNo,
+                pointer,
+                totalBattles
+            };
+            saveRankingData(rankingData).catch(err => console.log("Cloud save error:", err));
+        }
+        
         showDuel(sortedIndexList[leftIndex][leftInnerIndex], sortedIndexList[rightIndex][rightInnerIndex]);
     }
 }

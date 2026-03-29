@@ -137,7 +137,7 @@ async function saveRankingData(data) {
         }
 
         if (result.error) throw result.error;
-        alert("Datos guardados en la nube!");
+        //alert("Datos guardados en la nube!");// Es molestoso
         return { success: true };
     } catch (error) {
         console.error('Error al guardar:', error);

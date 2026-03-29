@@ -60,61 +60,47 @@ function configureLoadButton() {
     let battleNoLocal = JSON.parse(localStorage.getItem(`${config.localStoragePrefix}-battleNo`));
     let leftIndexLocal = JSON.parse(localStorage.getItem(`${config.localStoragePrefix}-leftIndex`));
     
-    // Mostrar estado del usuario
     const user = (typeof getCurrentUser !== 'undefined') ? getCurrentUser() : null;
+    const buttonContainer = document.querySelector('.button-container');
+    
+    // Eliminar botones viejos de auth para evitar duplicados
+    const oldCloudLoadBtn = document.getElementById('cloudLoadBtn');
+    const oldLoginBtn = document.getElementById('cloudLoginBtn');
+    const oldUserDisplay = document.getElementById('userDisplay');
+    
+    if (oldCloudLoadBtn) oldCloudLoadBtn.remove();
+    if (oldLoginBtn) oldLoginBtn.remove();
+    if (oldUserDisplay) oldUserDisplay.remove();
     
     if (user) {
-        // Usuario logueado - mostrar botón de cloud load si no existe
-        let cloudLoadBtn = document.getElementById('cloudLoadBtn');
-        if (!cloudLoadBtn) {
-            cloudLoadBtn = document.createElement('button');
-            cloudLoadBtn.id = 'cloudLoadBtn';
-            cloudLoadBtn.className = 'basic-button';
-            cloudLoadBtn.textContent = '☁️ Cargado en la nube';
-            cloudLoadBtn.style.backgroundColor = '#2d6a4f';
-            cloudLoadBtn.onclick = loadFromCloud;
-            document.querySelector('.button-container').appendChild(cloudLoadBtn);
-        }
+        // Usuario logueado - mostrar botón de cloud load
+        let cloudLoadBtn = document.createElement('button');
+        cloudLoadBtn.id = 'cloudLoadBtn';
+        cloudLoadBtn.className = 'basic-button';
+        cloudLoadBtn.textContent = '☁️ Cargado en la nube';
+        cloudLoadBtn.style.backgroundColor = '#2d6a4f';
+        cloudLoadBtn.onclick = loadFromCloud;
+        buttonContainer.appendChild(cloudLoadBtn);
         
         // Mostrar nombre de usuario
-        let userDisplay = document.getElementById('userDisplay');
-        if (!userDisplay) {
-            userDisplay = document.createElement('div');
-            userDisplay.id = 'userDisplay';
-            userDisplay.className = 'user-display';
-            document.querySelector('.button-container').appendChild(userDisplay);
-        }
+        let userDisplay = document.createElement('div');
+        userDisplay.id = 'userDisplay';
+        userDisplay.className = 'user-display';
         userDisplay.innerHTML = `✅ ${user.username} | <span onclick="logout()" style="cursor:pointer; color:#ff9999;">Logout</span>`;
-        
-        // Ocultar botón de login si existe
-        let loginBtn = document.getElementById('cloudLoginBtn');
-        if (loginBtn) loginBtn.style.display = 'none';
+        buttonContainer.appendChild(userDisplay);
         
     } else {
         // No logueado - mostrar botón de login
-        let loginBtn = document.getElementById('cloudLoginBtn');
-        if (!loginBtn) {
-            loginBtn = document.createElement('button');
-            loginBtn.id = 'cloudLoginBtn';
-            loginBtn.className = 'basic-button';
-            loginBtn.textContent = '☁️ Login';
-            loginBtn.style.backgroundColor = '#1e3a8a';
-            loginBtn.onclick = showAuthModal;
-            document.querySelector('.button-container').appendChild(loginBtn);
-        } else {
-            loginBtn.style.display = 'inline-block';
-        }
-        
-        // Ocultar botón de cloud load si existe
-        let cloudLoadBtn = document.getElementById('cloudLoadBtn');
-        if (cloudLoadBtn) cloudLoadBtn.style.display = 'none';
-        
-        // Ocultar display de usuario si existe
-        const userDisplay = document.getElementById('userDisplay');
-        if (userDisplay) userDisplay.remove();
+        let loginBtn = document.createElement('button');
+        loginBtn.id = 'cloudLoginBtn';
+        loginBtn.className = 'basic-button';
+        loginBtn.textContent = '☁️ Login';
+        loginBtn.style.backgroundColor = '#1e3a8a';
+        loginBtn.onclick = showAuthModal;
+        buttonContainer.appendChild(loginBtn);
     }
     
-    // Configurar botón load normal (siempre visible)
+    // Configurar botón load normal
     if (battleNoLocal == null) {
         loadButton.hidden = true;
         title.textContent = 'Press "Start" to begin sorting.';

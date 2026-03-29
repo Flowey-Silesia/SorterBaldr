@@ -9,6 +9,14 @@ if (typeof supabase === 'undefined') {
     var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
+// Crear cliente solo si no existe
+let supabase;
+if (typeof window.supabase !== 'undefined') {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} else {
+    console.error("Supabase JS not loaded");
+}
+
 // Inicializar Supabase
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 

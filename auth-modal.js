@@ -1,24 +1,21 @@
 // auth-modal.js
 let isLoginMode = true;
 
-function setupAuthModal() {
-    const loginBtn = document.getElementById('loginBtn');
-    const registerBtn = document.getElementById('registerBtn');
-    const switchBtn = document.getElementById('switchAuthBtn');
-    const closeBtn = document.getElementById('closeAuthBtn');
-    
-    if (loginBtn) loginBtn.onclick = handleLogin;
-    if (registerBtn) registerBtn.onclick = handleRegister;
-    if (switchBtn) switchBtn.onclick = toggleAuthMode;
-    if (closeBtn) closeBtn.onclick = closeAuthModal;
-    
-    if (registerBtn) registerBtn.style.display = 'none';
-    updateAuthMode();
+// Definir funciones primero
+function closeAuthModal() {
+    const modal = document.getElementById('authModal');
+    const overlay = document.getElementById('modalOverlay');
+    if (modal) modal.style.display = 'none';
+    if (overlay) overlay.style.display = 'none';
+    const messageDiv = document.getElementById('authMessage');
+    if (messageDiv) messageDiv.textContent = '';
 }
 
-function toggleAuthMode() {
-    isLoginMode = !isLoginMode;
-    updateAuthMode();
+function showAuthModal() {
+    const modal = document.getElementById('authModal');
+    const overlay = document.getElementById('modalOverlay');
+    if (modal) modal.style.display = 'block';
+    if (overlay) overlay.style.display = 'block';
 }
 
 function updateAuthMode() {
@@ -41,6 +38,11 @@ function updateAuthMode() {
         if (switchBtn) switchBtn.textContent = 'Back to Login';
         if (confirmGroup) confirmGroup.style.display = 'block';
     }
+}
+
+function toggleAuthMode() {
+    isLoginMode = !isLoginMode;
+    updateAuthMode();
 }
 
 async function handleLogin() {
@@ -119,18 +121,17 @@ async function handleRegister() {
     }
 }
 
-function closeAuthModal() {
-    const modal = document.getElementById('authModal');
-    const overlay = document.getElementById('modalOverlay');
-    if (modal) modal.style.display = 'none';
-    if (overlay) overlay.style.display = 'none';
-    const messageDiv = document.getElementById('authMessage');
-    if (messageDiv) messageDiv.textContent = '';
-}
-
-function showAuthModal() {
-    const modal = document.getElementById('authModal');
-    const overlay = document.getElementById('modalOverlay');
-    if (modal) modal.style.display = 'block';
-    if (overlay) overlay.style.display = 'block';
+function setupAuthModal() {
+    const loginBtn = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('registerBtn');
+    const switchBtn = document.getElementById('switchAuthBtn');
+    const closeBtn = document.getElementById('closeAuthBtn');
+    
+    if (loginBtn) loginBtn.onclick = handleLogin;
+    if (registerBtn) registerBtn.onclick = handleRegister;
+    if (switchBtn) switchBtn.onclick = toggleAuthMode;
+    if (closeBtn) closeBtn.onclick = closeAuthModal;
+    
+    if (registerBtn) registerBtn.style.display = 'none';
+    updateAuthMode();
 }

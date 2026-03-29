@@ -57,6 +57,8 @@ document.addEventListener("DOMContentLoaded", function() {
 function configureLoadButton() {
     let loadButton = document.getElementById("load");
     let title = document.querySelector('.title');
+    
+    // Leer el estado actual de localStorage
     let battleNoLocal = JSON.parse(localStorage.getItem(`${config.localStoragePrefix}-battleNo`));
     let leftIndexLocal = JSON.parse(localStorage.getItem(`${config.localStoragePrefix}-leftIndex`));
     
@@ -73,24 +75,20 @@ function configureLoadButton() {
     if (oldUserDisplay) oldUserDisplay.remove();
     
     if (user) {
-        // Usuario logueado - mostrar botón de cloud load
         let cloudLoadBtn = document.createElement('button');
         cloudLoadBtn.id = 'cloudLoadBtn';
         cloudLoadBtn.className = 'basic-button';
-        cloudLoadBtn.textContent = '☁️ Cargado en la nube';
+        cloudLoadBtn.textContent = '☁️ Load Cloud';
         cloudLoadBtn.style.backgroundColor = '#2d6a4f';
         cloudLoadBtn.onclick = loadFromCloud;
         buttonContainer.appendChild(cloudLoadBtn);
         
-        // Mostrar nombre de usuario
         let userDisplay = document.createElement('div');
         userDisplay.id = 'userDisplay';
         userDisplay.className = 'user-display';
         userDisplay.innerHTML = `✅ ${user.username} | <span onclick="logout()" style="cursor:pointer; color:#ff9999;">Logout</span>`;
         buttonContainer.appendChild(userDisplay);
-        
     } else {
-        // No logueado - mostrar botón de login
         let loginBtn = document.createElement('button');
         loginBtn.id = 'cloudLoginBtn';
         loginBtn.className = 'basic-button';
@@ -100,19 +98,22 @@ function configureLoadButton() {
         buttonContainer.appendChild(loginBtn);
     }
     
-    // Configurar botón load normal
+    // 🔹 CONFIGURAR BOTÓN LOAD SEGÚN EL ESTADO ACTUAL 🔹
     if (battleNoLocal == null) {
+        // No hay datos guardados
         loadButton.hidden = true;
         title.textContent = 'Press "Start" to begin sorting.';
     } else {
-        if (leftIndexLocal == -1) {
-            loadButton.textContent = "Show Results";
-            title.textContent = 'Press "Start" to begin sorting or "Show Results" to display results.';
-        } else {
-            loadButton.textContent = "Continue Local";
-            title.textContent = 'Press "Start" to begin sorting or "Continue Local" to resume saved progress.';
-        }
         loadButton.hidden = false;
+        if (leftIndexLocal == -1) {
+            // El ranking ya está completado (leftIndex = -1)
+            loadButton.textContent = "Show Results";
+            title.textContent = 'Press "Start" to begin sorting or "Show Results" to display results of previous sorting.';
+        } else {
+            // Hay progreso guardado
+            loadButton.textContent = "Continue";
+            title.textContent = 'Press "Start" to begin sorting or "Continue" to load saved progress and resume where you left.';
+        }
     }
 }
 
@@ -470,7 +471,7 @@ function pick(sortType) {
                 else console.log("Cloud save failed:", result.error);
             });
         }
-        
+        configureLoadButton();
         result();
     } else {
         battleNo++;
@@ -557,6 +558,7 @@ function start() {
 
     showDuel(sortedIndexList[leftIndex][leftInnerIndex], sortedIndexList[rightIndex][rightInnerIndex]);
     document.querySelector('.progress-container').removeAttribute("hidden");
+        configureLoadButton();
 }
 
 function progressBar(indicator, percentage) {
@@ -662,6 +664,7 @@ function result() {
     tableContainer.className = "table-container";
     tableContainer.appendChild(table);
     duelContainer.appendChild(tableContainer);
+        configureLoadButton();
 
 }
 

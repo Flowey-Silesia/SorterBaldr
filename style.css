@@ -310,3 +310,23 @@ table th,
 table td {
   text-overflow: ellipsis;
 }
+
+.auth-input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  background: rgba(255, 255, 255, 0.9);
+  box-sizing: border-box;
+}
+
+#authModal .option-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#authModal .option-button {
+  margin: 5px 0;
+}

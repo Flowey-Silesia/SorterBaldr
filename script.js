@@ -40,70 +40,87 @@ fetch('songList.json')
     });
 
 
-configureLoadButton();
+// Esperar a que todo el DOM esté listo
+document.addEventListener("DOMContentLoaded", function() {
+    document.title = config.title;
+    document.querySelector('meta[name="og:site_name"]').setAttribute("content", config.title);
+    document.querySelector('meta[name="og:description"]').setAttribute("content", config.description);
+    
+    // Configurar autenticación si está disponible
+    if (typeof setupAuthModal !== 'undefined') {
+        setupAuthModal();
+    }
+    
+    // Configurar botón de carga
+    configureLoadButton();
+});
 
-// Función para mostrar modal de autenticación
-function showAuthModal() {
-  document.getElementById('authModal').style.display = 'block';
-  document.getElementById('modalOverlay').style.display = 'block';
-}
-
-function closeAuthModal() {
-  document.getElementById('authModal').style.display = 'none';
-  document.getElementById('modalOverlay').style.display = 'none';
-  document.getElementById('authMessage').textContent = '';
-}
-// Modificar configureLoadButton
 function configureLoadButton() {
     let loadButton = document.getElementById("load");
     let title = document.querySelector('.title');
+    let battleNoLocal = JSON.parse(localStorage.getItem(`${config.localStoragePrefix}-battleNo`));
+    let leftIndexLocal = JSON.parse(localStorage.getItem(`${config.localStoragePrefix}-leftIndex`));
     
-    // Primero verificar si hay usuario autenticado
-    if (!getCurrentUser()) {
-        loadButton.hidden = true;
-        title.textContent = 'Please login to start sorting.';
-        
-        // Agregar botón de login si no existe
+    // Verificar si hay autenticación disponible y usuario logueado
+    const hasAuth = typeof getCurrentUser !== 'undefined';
+    const isLoggedIn = hasAuth && getCurrentUser();
+    
+    if (isLoggedIn) {
+        // Usuario autenticado - mostrar botón de cloud load
+        if (!document.getElementById('cloudLoadBtn')) {
+            let cloudBtn = document.createElement('button');
+            cloudBtn.id = 'cloudLoadBtn';
+            cloudBtn.className = 'basic-button';
+            cloudBtn.textContent = '☁️ Load from Cloud';
+            cloudBtn.onclick = loadByUsername;
+            document.querySelector('.button-container').appendChild(cloudBtn);
+        }
+    } else if (hasAuth) {
+        // Autenticación disponible pero no logueado
         if (!document.getElementById('loginBtnMain')) {
             let loginBtn = document.createElement('button');
             loginBtn.id = 'loginBtnMain';
             loginBtn.className = 'basic-button';
-            loginBtn.textContent = 'Login / Register';
+            loginBtn.textContent = '☁️ Cloud Login';
             loginBtn.onclick = showAuthModal;
             document.querySelector('.button-container').appendChild(loginBtn);
+        }
+    }
+    
+    // Siempre mostrar el botón de load si hay datos locales
+    if (battleNoLocal == null) {
+        loadButton.hidden = true;
+        title.textContent = 'Press "Start" to begin sorting.';
+    } else {
+        if (leftIndexLocal == -1) {
+            loadButton.textContent = "Show Results";
+            title.textContent = 'Press "Start" to begin sorting or "Show Results" to display results.';
+        } else {
+            loadButton.textContent = "Continue";
+            title.textContent = 'Press "Start" to begin sorting or "Continue" to resume.';
+        }
+        loadButton.hidden = false;
+    }
+}
+
+// Función para cargar desde la nube
+async function loadByUsername() {
+    if (typeof getCurrentUser === 'undefined' || !getCurrentUser()) {
+        alert('Please login first');
+        if (typeof showAuthModal !== 'undefined') {
+            showAuthModal();
         }
         return;
     }
     
-    let battleNoLocal = JSON.parse(localStorage.getItem(`${config.localStoragePrefix}-battleNo`));
-    let leftIndexLocal = JSON.parse(localStorage.getItem(`${config.localStoragePrefix}-leftIndex`));
-    if (battleNoLocal == null) {
-        loadButton.hidden = true;
-        title.textContent = 'Press "Start" to begin sorting.';
-        return;
-    }
-
-    if (leftIndexLocal == -1) {
-        loadButton.textContent = "Show Results";
-        title.textContent = 'Press "Start" to begin sorting or "Show Results" to display results of previous sorting.';
-    } else {
-        loadButton.textContent = "Continue";
-        title.textContent = 'Press "Start" to begin sorting or "Continue" to load saved progress and resume where you left.';
-    }
-}
-
-// Nueva función para cargar por username
-async function loadByUsername() {
-    if (!getCurrentUser()) {
-        alert('Please login first');
-        showAuthModal();
+    if (typeof loadRankingData === 'undefined') {
+        alert('Cloud save feature not available');
         return;
     }
     
     const result = await loadRankingData();
     
     if (result.success) {
-        // Cargar los datos en las variables globales
         sortedIndexList = result.data.sortedIndexList;
         recordDataList = result.data.recordDataList;
         parentIndexList = result.data.parentIndexList;
@@ -116,7 +133,6 @@ async function loadByUsername() {
         pointer = result.data.pointer;
         totalBattles = result.data.totalBattles;
         
-        // Continuar con la carga
         if (leftIndex == -1) {
             document.querySelector('.progress-container').removeAttribute("hidden");
             progressBar(`Completed! (${battleNo} battles)`, 100);
@@ -139,9 +155,9 @@ async function loadByUsername() {
             showDuel(sortedIndexList[leftIndex][leftInnerIndex], sortedIndexList[rightIndex][rightInnerIndex]);
         }
         
-        alert('Data loaded successfully!');
+        alert('Data loaded from cloud successfully!');
     } else {
-        alert('Error loading data: ' + result.error);
+        alert('Error loading from cloud: ' + result.error);
     }
 }
 
@@ -587,8 +603,9 @@ function copyResults() {
     });
 }
 
+// Modificar autoSave para guardar en nube si está disponible
 function autoSave() {
-    // Guardar en localStorage
+    // Guardar en localStorage siempre
     localStorage.setItem(`${config.localStoragePrefix}-sortedIndexList`, JSON.stringify(sortedIndexList));
     localStorage.setItem(`${config.localStoragePrefix}-recordDataList`, JSON.stringify(recordDataList));
     localStorage.setItem(`${config.localStoragePrefix}-parentIndexList`, JSON.stringify(parentIndexList));
@@ -601,8 +618,8 @@ function autoSave() {
     localStorage.setItem(`${config.localStoragePrefix}-pointer`, JSON.stringify(pointer));
     localStorage.setItem(`${config.localStoragePrefix}-totalBattles`, JSON.stringify(totalBattles));
     
-    // Guardar en la nube si hay usuario autenticado
-    if (getCurrentUser()) {
+    // Guardar en la nube si está disponible y hay usuario
+    if (typeof getCurrentUser !== 'undefined' && getCurrentUser() && typeof saveRankingData !== 'undefined') {
         const rankingData = {
             sortedIndexList,
             recordDataList,
@@ -616,19 +633,12 @@ function autoSave() {
             pointer,
             totalBattles
         };
-        saveRankingData(rankingData);
+        saveRankingData(rankingData).catch(err => {
+            console.log("Cloud save error:", err);
+        });
     }
 }
 
-// Agregar en DOMContentLoaded
-document.addEventListener("DOMContentLoaded", function() {
-    document.title = config.title;
-    document.querySelector('meta[name="og:site_name"]').setAttribute("content", config.title);
-    document.querySelector('meta[name="og:description"]').setAttribute("content", config.description);
-    
-    // Setup auth modal
-    setupAuthModal();
-});
 
 function loadProgress() {
     battleNo = JSON.parse(localStorage.getItem(`${config.localStoragePrefix}-battleNo`));

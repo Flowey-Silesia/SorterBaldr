@@ -60,27 +60,61 @@ function configureLoadButton() {
     let battleNoLocal = JSON.parse(localStorage.getItem(`${config.localStoragePrefix}-battleNo`));
     let leftIndexLocal = JSON.parse(localStorage.getItem(`${config.localStoragePrefix}-leftIndex`));
     
-    // Verificar si hay usuario autenticado (solo si la función existe)
-    let isLoggedIn = false;
-    if (typeof getCurrentUser !== 'undefined') {
-        try {
-            isLoggedIn = !!getCurrentUser();
-        } catch(e) {
-            isLoggedIn = false;
+    // Mostrar estado del usuario
+    const user = (typeof getCurrentUser !== 'undefined') ? getCurrentUser() : null;
+    
+    if (user) {
+        // Usuario logueado - mostrar botón de cloud load si no existe
+        let cloudLoadBtn = document.getElementById('cloudLoadBtn');
+        if (!cloudLoadBtn) {
+            cloudLoadBtn = document.createElement('button');
+            cloudLoadBtn.id = 'cloudLoadBtn';
+            cloudLoadBtn.className = 'basic-button';
+            cloudLoadBtn.textContent = '☁️ Cargado en la nube';
+            cloudLoadBtn.style.backgroundColor = '#2d6a4f';
+            cloudLoadBtn.onclick = loadFromCloud;
+            document.querySelector('.button-container').appendChild(cloudLoadBtn);
         }
+        
+        // Mostrar nombre de usuario
+        let userDisplay = document.getElementById('userDisplay');
+        if (!userDisplay) {
+            userDisplay = document.createElement('div');
+            userDisplay.id = 'userDisplay';
+            userDisplay.className = 'user-display';
+            document.querySelector('.button-container').appendChild(userDisplay);
+        }
+        userDisplay.innerHTML = `✅ ${user.username} | <span onclick="logout()" style="cursor:pointer; color:#ff9999;">Logout</span>`;
+        
+        // Ocultar botón de login si existe
+        let loginBtn = document.getElementById('cloudLoginBtn');
+        if (loginBtn) loginBtn.style.display = 'none';
+        
+    } else {
+        // No logueado - mostrar botón de login
+        let loginBtn = document.getElementById('cloudLoginBtn');
+        if (!loginBtn) {
+            loginBtn = document.createElement('button');
+            loginBtn.id = 'cloudLoginBtn';
+            loginBtn.className = 'basic-button';
+            loginBtn.textContent = '☁️ Login';
+            loginBtn.style.backgroundColor = '#1e3a8a';
+            loginBtn.onclick = showAuthModal;
+            document.querySelector('.button-container').appendChild(loginBtn);
+        } else {
+            loginBtn.style.display = 'inline-block';
+        }
+        
+        // Ocultar botón de cloud load si existe
+        let cloudLoadBtn = document.getElementById('cloudLoadBtn');
+        if (cloudLoadBtn) cloudLoadBtn.style.display = 'none';
+        
+        // Ocultar display de usuario si existe
+        const userDisplay = document.getElementById('userDisplay');
+        if (userDisplay) userDisplay.remove();
     }
     
-    // Botón de cloud solo si hay auth
-    if (typeof getCurrentUser !== 'undefined' && !document.getElementById('cloudLoadBtn')) {
-        let cloudBtn = document.createElement('button');
-        cloudBtn.id = 'cloudLoadBtn';
-        cloudBtn.className = 'basic-button';
-        cloudBtn.textContent = isLoggedIn ? '☁️ Save to Cloud' : '☁️ Cloud Login';
-        cloudBtn.onclick = isLoggedIn ? saveToCloud : showAuthModal;
-        document.querySelector('.button-container').appendChild(cloudBtn);
-    }
-    
-    // Configurar botón load normal
+    // Configurar botón load normal (siempre visible)
     if (battleNoLocal == null) {
         loadButton.hidden = true;
         title.textContent = 'Press "Start" to begin sorting.';
@@ -89,8 +123,8 @@ function configureLoadButton() {
             loadButton.textContent = "Show Results";
             title.textContent = 'Press "Start" to begin sorting or "Show Results" to display results.';
         } else {
-            loadButton.textContent = "Continue";
-            title.textContent = 'Press "Start" to begin sorting or "Continue" to resume.';
+            loadButton.textContent = "Continue Local";
+            title.textContent = 'Press "Start" to begin sorting or "Continue Local" to resume saved progress.';
         }
         loadButton.hidden = false;
     }

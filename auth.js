@@ -198,7 +198,7 @@ function logout() {
     localStorage.removeItem('cloud_username');
     localStorage.removeItem('cloud_logged_in');
     alert("Sesión cerrada");
-    location.reload();
+    location.reload(); // Recargar para actualizar la UI
 }
 
 function getCurrentUser() {

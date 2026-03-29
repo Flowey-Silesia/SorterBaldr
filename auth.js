@@ -148,48 +148,47 @@ async function saveRankingData(data) {
 
 async function loadRankingData() {
     if (!currentUser) {
-        alert("No hay usuario logueado");
         return { success: false, error: 'No hay usuario autenticado' };
     }
     if (!_supabaseClient) return { success: false, error: 'Supabase no configurado' };
 
     try {
-        console.log("Cargando datos para:", currentUser.username);
+        console.log("Cargando datos para usuario:", currentUser.username);
         
+        // Usar maybeSingle() en lugar de single() para evitar error si no hay datos
         const { data, error } = await _supabaseClient
             .from('user_rankings')
             .select('*')
-            .eq('user_id', currentUser.id);
+            .eq('user_id', currentUser.id)
+            .maybeSingle();
 
         if (error) throw error;
         
-        if (!data || data.length === 0) {
-            alert("No hay datos guardados para este usuario");
-            return { success: false, error: 'No hay datos' };
+        if (!data) {
+            console.log("No se encontraron datos para el usuario");
+            return { success: false, error: 'No hay datos guardados. Juega algunas batallas primero.' };
         }
 
-        const record = data[0];
-        console.log("Datos cargados");
+        console.log("Datos encontrados:", data);
         
         return { 
             success: true, 
             data: {
-                sortedIndexList: record.sorted_index_list,
-                recordDataList: record.record_data_list,
-                parentIndexList: record.parent_index_list,
-                leftIndex: record.left_index,
-                leftInnerIndex: record.left_inner_index,
-                rightIndex: record.right_index,
-                rightInnerIndex: record.right_inner_index,
-                battleNo: record.battle_no,
-                sortedNo: record.sorted_no,
-                pointer: record.pointer,
-                totalBattles: record.total_battles
+                sortedIndexList: data.sorted_index_list,
+                recordDataList: data.record_data_list,
+                parentIndexList: data.parent_index_list,
+                leftIndex: data.left_index,
+                leftInnerIndex: data.left_inner_index,
+                rightIndex: data.right_index,
+                rightInnerIndex: data.right_inner_index,
+                battleNo: data.battle_no,
+                sortedNo: data.sorted_no,
+                pointer: data.pointer,
+                totalBattles: data.total_battles
             }
         };
     } catch (error) {
         console.error('Error al cargar:', error);
-        alert("Error al cargar: " + error.message);
         return { success: false, error: error.message };
     }
 }

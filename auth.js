@@ -197,8 +197,16 @@ function logout() {
     currentUser = null;
     localStorage.removeItem('cloud_username');
     localStorage.removeItem('cloud_logged_in');
-    alert("Sesión cerrada");
-    location.reload(); // Recargar para actualizar la UI
+    alert("Logged out");
+    
+    // Actualizar UI sin recargar
+    if (typeof configureLoadButton === 'function') {
+        configureLoadButton();
+    }
+    
+    // Limpiar display de usuario
+    const userDisplay = document.getElementById('userDisplay');
+    if (userDisplay) userDisplay.remove();
 }
 
 function getCurrentUser() {

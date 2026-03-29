@@ -223,23 +223,6 @@ function autoSave() {
     }
 }
 
-// Asegúrate de que showAuthModal y closeAuthModal existan
-function showAuthModal() {
-    const modal = document.getElementById('authModal');
-    const overlay = document.getElementById('modalOverlay');
-    if (modal) modal.style.display = 'block';
-    if (overlay) overlay.style.display = 'block';
-}
-
-function closeAuthModal() {
-    const modal = document.getElementById('authModal');
-    const overlay = document.getElementById('modalOverlay');
-    if (modal) modal.style.display = 'none';
-    if (overlay) overlay.style.display = 'none';
-    const msg = document.getElementById('authMessage');
-    if (msg) msg.textContent = '';
-}
-
 // El resto de tus funciones (showDuel, pick, start, undo, result, etc.) van aquí
 // ... mantén todas tus funciones originales ...
 

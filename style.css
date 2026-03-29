@@ -345,4 +345,12 @@ table td {
     padding: 20px;
     box-sizing: border-box;
 }
+/* Para botón de cloud (opcional) */
+.cloud-button {
+    background-color: #1e3a8a;
+}
+
+.cloud-button:hover {
+    background-color: #2d6a4f;
+}
 

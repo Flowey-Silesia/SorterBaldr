@@ -4,27 +4,21 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 let currentUser = null;
 
-// Verificar si supabase ya existe antes de declararlo
-if (typeof supabase === 'undefined') {
-    var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-}
-
-// Crear cliente solo si no existe
-let supabase;
+// Crear cliente de forma segura
+let supabaseClient;
 if (typeof window.supabase !== 'undefined') {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 } else {
     console.error("Supabase JS not loaded");
+    supabaseClient = null;
 }
-
-// Inicializar Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Función para registrar usuario
 async function registerUser(username, password) {
   try {
-    // Verificar si el usuario ya existe
-    const { data: existingUser, error: checkError } = await supabase
+    if (!supabaseClient) return { success: false, error: 'Supabase no configurado' };
+    
+    const { data: existingUser, error: checkError } = await supabaseClient
       .from('users')
       .select('username')
       .eq('username', username)
@@ -34,18 +28,11 @@ async function registerUser(username, password) {
       return { success: false, error: 'El usuario ya existe' };
     }
 
-    // Hash simple de contraseña (en producción usar bcrypt, pero para este caso simple está bien)
-    const hashedPassword = btoa(password); // Base64 encoding (simple)
+    const hashedPassword = btoa(password);
 
-    // Crear nuevo usuario
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('users')
-      .insert([
-        { 
-          username: username, 
-          password: hashedPassword 
-        }
-      ])
+      .insert([{ username: username, password: hashedPassword }])
       .select()
       .single();
 
@@ -62,9 +49,11 @@ async function registerUser(username, password) {
 // Función para login
 async function loginUser(username, password) {
   try {
+    if (!supabaseClient) return { success: false, error: 'Supabase no configurado' };
+    
     const hashedPassword = btoa(password);
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('users')
       .select('*')
       .eq('username', username)
@@ -88,10 +77,10 @@ async function saveRankingData(data) {
   if (!currentUser) {
     return { success: false, error: 'No hay usuario autenticado' };
   }
+  if (!supabaseClient) return { success: false, error: 'Supabase no configurado' };
 
   try {
-    // Verificar si ya existe un registro para este usuario
-    const { data: existingData, error: checkError } = await supabase
+    const { data: existingData, error: checkError } = await supabaseClient
       .from('user_rankings')
       .select('id')
       .eq('user_id', currentUser.id)
@@ -114,14 +103,12 @@ async function saveRankingData(data) {
 
     let result;
     if (existingData) {
-      // Actualizar registro existente
-      result = await supabase
+      result = await supabaseClient
         .from('user_rankings')
         .update(rankingData)
         .eq('user_id', currentUser.id);
     } else {
-      // Crear nuevo registro
-      result = await supabase
+      result = await supabaseClient
         .from('user_rankings')
         .insert([rankingData]);
     }
@@ -139,9 +126,10 @@ async function loadRankingData() {
   if (!currentUser) {
     return { success: false, error: 'No hay usuario autenticado' };
   }
+  if (!supabaseClient) return { success: false, error: 'Supabase no configurado' };
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('user_rankings')
       .select('*')
       .eq('user_id', currentUser.id)
